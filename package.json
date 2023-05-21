@@ -2,13 +2,15 @@
   "name": "natours",
   "version": "1.0.0",
   "description": " Learning Node.js+Express with mongoDB",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "nodemon server.js",
+    "start:prod": "NODE_ENV=production nodemon server.js"
   },
   "author": "Jaimin Rathwa",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "morgan": "^1.10.0"
   }
