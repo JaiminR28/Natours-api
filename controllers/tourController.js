@@ -1,7 +1,7 @@
 // const { dirname } = require('path');
 
 const Tour = require('../models/tourModel');
-const APIFeatures = require('./utils/apiFeatures');
+const APIFeatures = require('../utils/apiFeatures');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '5';
@@ -182,7 +182,7 @@ exports.getMonthlyPlan = async (req, res) => {
         $sort: { numTourStarts: -1 },
       },
       {
-        $limit: 6,
+        $limit: 12,
       },
     ]);
     res.status(200).json({
