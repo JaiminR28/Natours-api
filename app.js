@@ -1,5 +1,8 @@
+/* eslint-disable import/no-extraneous-dependencies */
 const express = require('express');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -9,10 +12,18 @@ const userRouter = require('./routes/userRoutes');
 const app = express();
 
 // 1) MIDDLEWARES
+app.use(cookieParser());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 app.use(express.json());
+
+const limiter = rateLimit({
+  max: 3,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too Many request from this IP. please try again later',
+});
+app.use('/api', limiter);
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
