@@ -3,6 +3,10 @@ const express = require('express');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -12,25 +16,52 @@ const userRouter = require('./routes/userRoutes');
 const app = express();
 
 // 1) MIDDLEWARES
+// Security HTTP headers
+app.use(helmet());
+
+// cokkie parse
 app.use(cookieParser());
+
+// Developement logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-app.use(express.json());
 
+// Limit requests from same API
 const limiter = rateLimit({
-  max: 3,
+  max: 100,
   windowMs: 60 * 60 * 1000,
   message: 'Too Many request from this IP. please try again later',
 });
 app.use('/api', limiter);
+
+// Body parser, reading data from the body int re.body
+app.use(express.json({ limit: '10kb' }));
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
   next();
 });
 
+// data sanitize against noSql query injection
+app.use(mongoSanitize());
+
+// Prevent pareameter pollution
+app.use(
+  hpp({
+    whitelist: [
+      'duration',
+      'ratingAverage',
+      'ratingsQuantity',
+      'maxGroupSize',
+      'difficulty',
+      'price',
+    ],
+  })
+);
+
 // 2. ROUTE HANDLERS
+app.use(xss());
 
 // app.get('/api/v1/tours', getAllTours);
 // app.post('/api/v1/tours', addTour);
