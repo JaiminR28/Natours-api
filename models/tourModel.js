@@ -6,35 +6,36 @@ const tourSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'A Tour must have a name'],
+      required: [true, 'A tour must have a name'],
       unique: true,
       trim: true,
-      maxlength: [40, 'Tour name must have less or equal 40 characters'],
-      minlength: [10, 'Tour name must have more or equal 10 characters'],
+      maxlength: [40, 'A tour name must have less or equal then 40 characters'],
+      minlength: [10, 'A tour name must have more or equal then 10 characters'],
+      // validate: [validator.isAlpha, 'Tour name must only contain characters']
     },
     slug: String,
     duration: {
       type: Number,
-      required: [true, 'A Tour must have a duration'],
+      required: [true, 'A tour must have a duration'],
     },
     maxGroupSize: {
       type: Number,
-      required: [true, 'A Tour must have a duration'],
+      required: [true, 'A tour must have a group size'],
     },
     difficulty: {
       type: String,
-      required: [true, 'A Tour must have a duration'],
+      required: [true, 'A tour must have a difficulty'],
       enum: {
         values: ['easy', 'medium', 'difficult'],
-        message: 'Difficulty id either: easy, medium or difficult',
+        message: 'Difficulty is either: easy, medium, difficult',
       },
     },
-    ratingAverage: {
+    ratingsAverage: {
       type: Number,
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be below 5.0'],
-      set: (val) => Math.round(val * 10) / 10,
+      set: (val) => Math.round(val * 10) / 10, // 4.666666, 46.6666, 47, 4.7
     },
     ratingsQuantity: {
       type: Number,
@@ -42,22 +43,22 @@ const tourSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      required: [true, 'A Tour must have a price'],
+      required: [true, 'A tour must have a price'],
     },
     priceDiscount: {
       type: Number,
       validate: {
         validator: function (val) {
-          // this only points
+          // this only points to current doc on NEW document creation
           return val < this.price;
         },
-        message: 'Discount price ( {VALUE}) should be below regular expression',
+        message: 'Discount price ({VALUE}) should be below regular price',
       },
     },
     summary: {
       type: String,
       trim: true,
-      required: [true, 'A Tour must have a summary'],
+      required: [true, 'A tour must have a description'],
     },
     description: {
       type: String,
@@ -65,7 +66,7 @@ const tourSchema = new mongoose.Schema(
     },
     imageCover: {
       type: String,
-      required: [true, 'A Tour must have a cover image'],
+      required: [true, 'A tour must have a cover image'],
     },
     images: [String],
     createdAt: {
@@ -76,6 +77,7 @@ const tourSchema = new mongoose.Schema(
     startDates: [Date],
     secretTour: {
       type: Boolean,
+      default: false,
     },
     startLocation: {
       // GeoJSON
@@ -88,29 +90,29 @@ const tourSchema = new mongoose.Schema(
       address: String,
       description: String,
     },
-    location: {
-      type: {
-        type: String,
-        default: 'Point',
-        enum: ['Point'],
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
       },
-      coordinates: [Number],
-      address: String,
-      description: String,
-      day: Number,
-    },
+    ],
     guides: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.ObjectId,
         ref: 'User',
       },
     ],
   },
   {
     toJSON: { virtuals: true },
-    toObjects: { virtuals: true },
-    versionKey: false,
-    strict: false,
+    toObject: { virtuals: true },
   }
 );
 
