@@ -1322,3 +1322,9 @@ body {
   -webkit-transform: translateY(-2px);
   transform: translateY(-2px);
 }
+
+.mapPopup {
+  text-align: center;
+  font-family: 'Lato', sans-serif;
+  font-size: 1.4rem;
+}
