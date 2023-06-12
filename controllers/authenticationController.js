@@ -24,11 +24,11 @@ const createSendToken = (user, statusCode, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
   };
-  user.password = undefined;
   res.cookie('jwt', token, cookieOptions);
+  user.password = undefined;
 
   res.status(statusCode).json({
-    status: 'sucess',
+    status: 'success',
     token,
     data: {
       user,
@@ -67,6 +67,34 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+// Only for rendered pages, no errors
+exports.isLoggedIn = catchAsync(async (req, res, next) => {
+  if (req.cookies.jwt) {
+    //  1) Verify Token
+    const decoded = await promisify(jwt.verify)(
+      req.cookies.jwt,
+      process.env.JWT_SECRET
+    );
+
+    // 2) check if the user still exists
+    const CurrentUser = await User.findById(decoded.id);
+    if (!CurrentUser) {
+      return next();
+    }
+
+    // 3) check if the user changed password after the token was issued
+    if (await CurrentUser.changePasswordAfter(decoded.iat)) {
+      return next();
+    }
+
+    // There is a logged in user
+    res.locals.user = CurrentUser;
+
+    return next();
+  }
+  next();
+});
+
 exports.protect = catchAsync(async (req, res, next) => {
   //  1) Getting token and check of it's true
   let token;
@@ -75,6 +103,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   if (!token) {

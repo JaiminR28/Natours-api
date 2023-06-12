@@ -1,12 +1,13 @@
 const express = require('express');
 const viewController = require('../controllers/viewscontoller');
+const authController = require('../controllers/authenticationController');
 
 const router = express.Router();
-router.get('/');
+
+router.use(authController.isLoggedIn);
 
 router.get('/', viewController.getOverview);
-
-// router.get('/tour', viewController.getTour);
 router.get('/tour/:slug', viewController.getTour);
+router.get('/login', viewController.getLogInForm);
 
 module.exports = router;
