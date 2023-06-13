@@ -30,6 +30,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(helmet());
 
 // cokkie parse
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Developement logging
