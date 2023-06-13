@@ -68,32 +68,35 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 // Only for rendered pages, no errors
-exports.isLoggedIn = catchAsync(async (req, res, next) => {
+exports.isLoggedIn = async (req, res, next) => {
   if (req.cookies.jwt) {
-    //  1) Verify Token
-    const decoded = await promisify(jwt.verify)(
-      req.cookies.jwt,
-      process.env.JWT_SECRET
-    );
+    try {
+      //  1) Verify Token
+      const decoded = await promisify(jwt.verify)(
+        req.cookies.jwt,
+        process.env.JWT_SECRET
+      );
 
-    // 2) check if the user still exists
-    const CurrentUser = await User.findById(decoded.id);
-    if (!CurrentUser) {
+      // 2) check if the user still exists
+      const CurrentUser = await User.findById(decoded.id);
+      if (!CurrentUser) {
+        return next();
+      }
+
+      // 3) check if the user changed password after the token was issued
+      if (await CurrentUser.changePasswordAfter(decoded.iat)) {
+        return next();
+      }
+
+      // There is a logged in user
+      res.locals.user = CurrentUser;
+      return next();
+    } catch (error) {
       return next();
     }
-
-    // 3) check if the user changed password after the token was issued
-    if (await CurrentUser.changePasswordAfter(decoded.iat)) {
-      return next();
-    }
-
-    // There is a logged in user
-    res.locals.user = CurrentUser;
-
-    return next();
   }
   next();
-});
+};
 
 exports.protect = catchAsync(async (req, res, next) => {
   //  1) Getting token and check of it's true
@@ -230,3 +233,12 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   // 4_ log the user in, Send JWT token
   createSendToken(user, 200, res);
 });
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({ status: 'success' });
+};
